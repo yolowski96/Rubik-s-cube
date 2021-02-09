@@ -1,4 +1,4 @@
-const { Router } = require('express');
+const { Router, response } = require('express');
 const productService = require('../services/productService');
 const accessoryService = require('../services/accessoryService');
 const isAuthenticated = require('../middlewares/isAuthenticated');
@@ -20,7 +20,7 @@ router.get('/create',isAuthenticated, (req,res) => {
 });
 
 router.post('/create', isAuthenticated,validateProduct,(req,res) => {
-    productService.create(req.body)
+    productService.create(req.body,req.user._id)
     .then(() => res.redirect('/'))
     .catch(() => res.status(500).end())
 });
@@ -43,6 +43,34 @@ router.get('/:productId/attach', isAuthenticated,async (req,res) => {
 router.post('/:productId/attach', isAuthenticated,(req,res) => {
     productService.attachAccessory(req.params.productId,req.body.accessory)
     .then(() => res.redirect(`/details/${req.params.productId}`))
+});
+
+router.get('/:productId/edit',isAuthenticated,(req,res) => {
+    productService.getOne(req.params.productId)
+        .then(product => {
+            res.render('editCube',product);
+        });
+})
+
+router.post('/:productId/edit',isAuthenticated,(req,res) => {
+    productService.updateOne(req.params.productId,req.body)
+    .then(response => {
+        res.redirect(`/details/${req.params.productId}`)
+    })
+})
+
+router.get('/:productId/delete', isAuthenticated, (req,res) => {
+    productService.getOne(req.params.productId)
+        .then(product => {
+            res.render('deleteCube',product);
+        });
+});
+
+router.post('/:productId/delete', isAuthenticated, (req,res) => {
+    productService.deleteOne(req.params.productId)
+        .then(response => {
+            res.redirect('/');
+        })
 });
 
 module.exports = router;
